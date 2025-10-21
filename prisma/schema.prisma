@@ -1,0 +1,192 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  username      String    @unique
+  password      String
+  firstName     String?
+  lastName      String?
+  avatar        String?
+  role          UserRole  @default(MEMBER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  projectMemberships ProjectMember[]
+  createdProjects    Project[]       @relation("ProjectCreator")
+  createdCards       Card[]          @relation("CardCreator")
+  assignedCards      Card[]          @relation("CardAssignee")
+  comments           Comment[]
+  activities         Activity[]
+
+  @@map("users")
+}
+
+model Project {
+  id          String    @id @default(cuid())
+  title       String
+  description String?   @db.Text
+  specifications String? @db.Text
+  media       Json?
+  imageUrl    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  createdById String
+
+  // Relations
+  createdBy User            @relation("ProjectCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  members   ProjectMember[]
+  boards    Board[]
+  labels    Label[]
+
+  @@map("projects")
+}
+
+model ProjectMember {
+  id        String   @id @default(cuid())
+  role      UserRole @default(MEMBER)
+  joinedAt  DateTime @default(now())
+  userId    String
+  projectId String
+
+  // Relations
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
+  @@map("project_members")
+}
+
+model Board {
+  id          String   @id @default(cuid())
+  title       String
+  description String?  @db.Text
+  projectId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  project    Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  lists      List[]
+  activities Activity[]
+
+  @@map("boards")
+}
+
+model List {
+  id        String   @id @default(cuid())
+  title     String
+  position  Int
+  boardId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  board      Board      @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cards      Card[]
+  activities Activity[]
+
+  @@map("lists")
+}
+
+model Card {
+  id          String    @id @default(cuid())
+  title       String
+  description String?   @db.Text
+  position    Int
+  priority    Priority?
+  dueDate     DateTime?
+  listId      String
+  createdById String
+  attachments Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  list         List            @relation(fields: [listId], references: [id], onDelete: Cascade)
+  createdBy    User            @relation("CardCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  assignedTo   User[]          @relation("CardAssignee")
+  labels       Label[]
+  comments     Comment[]
+  activities   Activity[]
+
+  @@map("cards")
+}
+
+model Label {
+  id        String   @id @default(cuid())
+  name      String
+  color     String
+  projectId String
+  createdAt DateTime @default(now())
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  cards   Card[]
+
+  @@map("labels")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  cardId    String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+}
+
+model Activity {
+  id          String       @id @default(cuid())
+  type        ActivityType
+  description String       @db.Text
+  userId      String
+  cardId      String?
+  listId      String?
+  boardId     String?
+  createdAt   DateTime     @default(now())
+
+  // Relations
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  card  Card?  @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  list  List?  @relation(fields: [listId], references: [id], onDelete: Cascade)
+  board Board? @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@map("activities")
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ActivityType {
+  CARD_CREATED
+  CARD_MOVED
+  CARD_UPDATED
+  COMMENT_ADDED
+  MEMBER_ADDED
+}
