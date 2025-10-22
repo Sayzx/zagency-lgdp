@@ -54,6 +54,18 @@ export async function POST(request: Request) {
       },
     })
 
+    // Log activity
+    await prisma.activity.create({
+      data: {
+        type: "COMMENT_ADDED",
+        description: `added a comment on card "${card.title}"`,
+        userId: session.user.id,
+        cardId: card.id,
+        listId: card.listId,
+        boardId: card.list.board.id,
+      },
+    })
+
     // Transform response to match expected format
     const response = {
       id: comment.id,

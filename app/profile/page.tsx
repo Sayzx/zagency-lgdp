@@ -29,6 +29,7 @@ export default function ProfilePage() {
   const { data: session, status, update } = useSession({ required: true, onUnauthenticated: () => router.push("/login") })
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [profileData, setProfileData] = useState({
     firstName: "",
@@ -75,10 +76,11 @@ export default function ProfilePage() {
   const handleUpdateProfile = async () => {
     setIsSaving(true)
     try {
+      const { avatar, ...dataWithoutAvatar } = profileData
       const response = await fetch("/api/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(profileData),
+        body: JSON.stringify(dataWithoutAvatar),
       })
 
       if (response.ok) {
@@ -136,14 +138,46 @@ export default function ProfilePage() {
     }
   }
 
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setProfileData({ ...profileData, avatar: reader.result as string })
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file")
+      return
+    }
+
+    // Validate file size (2MB max)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("File size must be less than 2MB")
+      return
+    }
+
+    setIsUploadingAvatar(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const response = await fetch("/api/profile/avatar", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setProfileData({ ...profileData, avatar: data.avatar })
+        setProfile({ ...profile!, avatar: data.avatar })
+        toast.success("Avatar uploaded successfully")
+        await update()
+      } else {
+        const data = await response.json()
+        toast.error(data.error || "Failed to upload avatar")
       }
-      reader.readAsDataURL(file)
+    } catch (error) {
+      toast.error("An error occurred while uploading avatar")
+    } finally {
+      setIsUploadingAvatar(false)
     }
   }
 
@@ -189,15 +223,25 @@ export default function ProfilePage() {
                   </Avatar>
                   <div className="space-y-2">
                     <Label htmlFor="avatar" className="cursor-pointer">
-                      <div className="flex items-center gap-2 rounded-md bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700">
-                        <Upload className="h-4 w-4" />
-                        Upload Image
+                      <div className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white transition-colors ${isUploadingAvatar ? "bg-violet-600" : "bg-violet-600 hover:bg-violet-700 cursor-pointer"}`}>
+                        {isUploadingAvatar ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4" />
+                            Upload Image
+                          </>
+                        )}
                       </div>
                       <Input
                         id="avatar"
                         type="file"
                         accept="image/*"
                         onChange={handleAvatarUpload}
+                        disabled={isUploadingAvatar}
                         className="hidden"
                       />
                     </Label>

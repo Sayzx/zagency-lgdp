@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Loader2, Plus, Settings } from "lucide-react"
 import { toast } from "sonner"
 
@@ -214,9 +215,15 @@ export default function Home() {
           {/* User Profile */}
           <div className="border-t border-zinc-800 p-4 mt-auto">
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-full bg-violet-600 flex items-center justify-center text-white text-xs font-medium">
-                {(session?.user?.firstName?.[0] || "") + (session?.user?.lastName?.[0] || "") || "U"}
-              </div>
+              <Avatar className="h-8 w-8 bg-violet-600">
+                {session?.user?.avatar ? (
+                  <img src={session.user.avatar} alt="User avatar" className="h-full w-full object-cover" />
+                ) : (
+                  <AvatarFallback className="bg-violet-600 text-white text-xs">
+                    {(session?.user?.firstName?.[0] || "") + (session?.user?.lastName?.[0] || "") || "U"}
+                  </AvatarFallback>
+                )}
+              </Avatar>
               <div className="flex-1 overflow-hidden">
                 <p className="text-sm font-medium text-white">
                   {session?.user?.firstName && session?.user?.lastName

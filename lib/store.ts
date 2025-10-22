@@ -701,27 +701,36 @@ export const useStore = create<Store>()(
 
           // Extract all activities from all boards
           const allActivities: Activity[] = []
+          const activityIds = new Set<string>()
+          
           refreshedProject.boards?.forEach((board: any) => {
             board.activities?.forEach((activity: any) => {
-              allActivities.push({
-                id: activity.id,
-                type: activity.type,
-                userId: activity.userId,
-                cardId: activity.cardId,
-                listId: activity.listId,
-                boardId: activity.boardId,
-                description: activity.description,
-                createdAt: activity.createdAt,
-                user: activity.user,
-              })
+              if (!activityIds.has(activity.id)) {
+                activityIds.add(activity.id)
+                allActivities.push({
+                  id: activity.id,
+                  type: activity.type,
+                  userId: activity.userId,
+                  cardId: activity.cardId,
+                  listId: activity.listId,
+                  boardId: activity.boardId,
+                  description: activity.description,
+                  createdAt: activity.createdAt,
+                  user: activity.user,
+                })
+              }
             })
           })
+
+          // Merge with local activities that don't have a boardId yet (client-generated)
+          const localActivitiesWithoutBoardId = get().activities.filter((a) => !a.boardId)
+          const mergedActivities = [...allActivities, ...localActivitiesWithoutBoardId].slice(0, 100)
 
           set((state) => ({
             projects: state.projects.map((p) =>
               p.id === currentProjectId ? refreshedProject : p,
             ),
-            activities: [...allActivities, ...state.activities.filter((a) => a.boardId !== undefined)].slice(0, 100),
+            activities: mergedActivities,
           }))
         } catch (error) {
           console.error("Error refreshing project:", error)

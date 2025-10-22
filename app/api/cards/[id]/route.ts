@@ -76,6 +76,21 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
             },
           },
         },
+        list: {
+          select: { boardId: true },
+        },
+      },
+    })
+
+    // Log activity
+    await prisma.activity.create({
+      data: {
+        type: "CARD_UPDATED",
+        description: `updated card "${updatedCard.title}"`,
+        userId: session.user.id,
+        cardId: updatedCard.id,
+        listId: updatedCard.listId,
+        boardId: updatedCard.list.boardId,
       },
     })
 
@@ -118,9 +133,25 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       return NextResponse.json({ error: "You are not a member of this project" }, { status: 403 })
     }
 
+    // Store card info before deletion for activity log
+    const cardTitle = card.title
+    const boardId = card.list.board.id
+
     // Delete card
     await prisma.card.delete({
       where: { id },
+    })
+
+    // Log activity
+    await prisma.activity.create({
+      data: {
+        type: "CARD_UPDATED",
+        description: `deleted card "${cardTitle}"`,
+        userId: session.user.id,
+        cardId: id,
+        listId: card.listId,
+        boardId: boardId,
+      },
     })
 
     return NextResponse.json({ success: true })

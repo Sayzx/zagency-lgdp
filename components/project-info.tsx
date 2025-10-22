@@ -499,7 +499,8 @@ export function ProjectInfo() {
         </div>
         <div className="space-y-3">
           {project.members.map((member) => {
-            const memberName = member.name || `${member.firstName || ""} ${member.lastName || ""}`.trim() || "Unknown"
+            const memberName = member.name || `${member.user?.firstName || member.firstName || ""} ${member.user?.lastName || member.lastName || ""}`.trim() || "Unknown"
+            const memberEmail = member.user?.email || member.email || member.username || "No email"
             const roleColors: Record<string, string> = {
               OWNER: "bg-violet-600",
               ADMIN: "bg-blue-600",
@@ -517,7 +518,7 @@ export function ProjectInfo() {
                   </Avatar>
                   <div>
                     <p className="text-sm font-medium text-white">{memberName}</p>
-                    <p className="text-xs text-zinc-500">{member.email}</p>
+                    <p className="text-xs text-zinc-500">{memberEmail}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

@@ -22,6 +22,16 @@ export async function PATCH(
       return NextResponse.json({ error: "List ID and position are required" }, { status: 400 })
     }
 
+    // Get the target list to find boardId
+    const targetList = await prisma.list.findUnique({
+      where: { id: listId },
+      select: { boardId: true },
+    })
+
+    if (!targetList) {
+      return NextResponse.json({ error: "List not found" }, { status: 404 })
+    }
+
     // Update the card's list and position
     const card = await prisma.card.update({
       where: { id: params.id },
@@ -49,7 +59,7 @@ export async function PATCH(
       },
     })
 
-    // Log activity
+    // Log activity with boardId
     await prisma.activity.create({
       data: {
         type: "CARD_MOVED",
@@ -57,6 +67,7 @@ export async function PATCH(
         userId: session.user.id,
         cardId: card.id,
         listId: card.listId,
+        boardId: targetList.boardId,
       },
     })
 

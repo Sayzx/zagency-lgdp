@@ -68,6 +68,18 @@ export async function POST(request: Request) {
       },
     })
 
+    // Log activity
+    await prisma.activity.create({
+      data: {
+        type: "CARD_CREATED",
+        description: `created card "${card.title}"`,
+        userId: session.user.id,
+        cardId: card.id,
+        listId: card.listId,
+        boardId: list.board.id,
+      },
+    })
+
     return NextResponse.json(card, { status: 201 })
   } catch (error) {
     console.error(error)
