@@ -30,86 +30,97 @@ export function CardDetailModal() {
     addComment,
     addCommentAsync,
     currentUser,
-  } = useStore()
+  } = useStore();
 
-  const [commentText, setCommentText] = useState("")
-  const [isEditingTitle, setIsEditingTitle] = useState(false)
-  const [editedTitle, setEditedTitle] = useState("")
-  const [isEditingDescription, setIsEditingDescription] = useState(false)
-  const [editedDescription, setEditedDescription] = useState("")
-  const [isUpdating, setIsUpdating] = useState(false)
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
-  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false)
-  const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null)
+  const [commentText, setCommentText] = useState("");
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState("");
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [editedDescription, setEditedDescription] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+  const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(
+    null
+  );
 
-  const currentProject = projects.find((p) => p.id === currentProjectId)
-  const currentBoard = currentProject?.boards.find((b) => b.id === currentBoardId)
-  const card = currentBoard?.lists.flatMap((l) => l.cards).find((c) => c.id === selectedCardId)
+  const currentProject = projects.find((p) => p.id === currentProjectId);
+  const currentBoard = currentProject?.boards.find(
+    (b) => b.id === currentBoardId
+  );
+  const card = currentBoard?.lists
+    .flatMap((l) => l.cards)
+    .find((c) => c.id === selectedCardId);
 
-  if (!card) return null
+  if (!card) return null;
 
-  const cardLabels = currentProject?.labels?.filter((l) => card.labels.includes(l.id)) || []
-  const assignedUsers = card.assignedTo || []
-  const availableLabels = (currentProject?.labels ?? []).filter((l) => !(card.labels || []).includes(l.id))
-  const availableUsers = (currentProject?.members ?? []).filter((m) => !assignedUsers.some((u) => u.id === m.id))
+  const cardLabels =
+    currentProject?.labels?.filter((l) => card.labels.includes(l.id)) || [];
+  const assignedUsers = card.assignedTo || [];
+  const availableLabels = (currentProject?.labels ?? []).filter(
+    (l) => !(card.labels || []).includes(l.id)
+  );
+  const availableUsers = (currentProject?.members ?? []).filter(
+    (m) => !assignedUsers.some((u) => u.id === m.id)
+  );
 
   const handleClose = () => {
-    setSelectedCard(null)
-    setIsEditingTitle(false)
-    setIsEditingDescription(false)
-  }
+    setSelectedCard(null);
+    setIsEditingTitle(false);
+    setIsEditingDescription(false);
+  };
 
   const handleUpdateTitle = async () => {
     if (editedTitle.trim() && editedTitle !== card.title) {
       try {
-        setIsUpdating(true)
-        await updateCardAsync(card.id, { title: editedTitle })
-        toast.success("Title updated")
+        setIsUpdating(true);
+        await updateCardAsync(card.id, { title: editedTitle });
+        toast.success("Title updated");
       } catch (error) {
-        toast.error("Failed to update title")
-        console.error(error)
+        toast.error("Failed to update title");
+        console.error(error);
       } finally {
-        setIsUpdating(false)
+        setIsUpdating(false);
       }
     }
-    setIsEditingTitle(false)
-  }
+    setIsEditingTitle(false);
+  };
 
   const handleUpdateDescription = async () => {
     if (editedDescription !== card.description) {
       try {
-        setIsUpdating(true)
-        await updateCardAsync(card.id, { description: editedDescription })
-        toast.success("Description updated")
+        setIsUpdating(true);
+        await updateCardAsync(card.id, { description: editedDescription });
+        toast.success("Description updated");
       } catch (error) {
-        toast.error("Failed to update description")
-        console.error(error)
+        toast.error("Failed to update description");
+        console.error(error);
       } finally {
-        setIsUpdating(false)
+        setIsUpdating(false);
       }
     }
-    setIsEditingDescription(false)
-  }
+    setIsEditingDescription(false);
+  };
 
   const handleAddComment = async () => {
     if (commentText.trim()) {
       try {
-        setIsUpdating(true)
-        await addCommentAsync(card.id, commentText)
-        setCommentText("")
-        toast.success("Comment added")
+        setIsUpdating(true);
+        await addCommentAsync(card.id, commentText);
+        setCommentText("");
+        toast.success("Comment added");
       } catch (error) {
-        toast.error("Failed to add comment")
-        console.error(error)
+        toast.error("Failed to add comment");
+        console.error(error);
       } finally {
-        setIsUpdating(false)
+        setIsUpdating(false);
       }
     }
-  }
+  };
 
   const handleAddLabel = async (labelId: string) => {
     try {
-      setIsUpdating(true)
+      setIsUpdating(true);
       const response = await fetch(`/api/cards/${card.id}/labels`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -127,16 +138,16 @@ export function CardDetailModal() {
       updateCard(card.id, { labels: labelIds })
       toast.success("Label added")
     } catch (error) {
-      toast.error("Failed to add label")
-      console.error(error)
+      toast.error("Failed to add label");
+      console.error(error);
     } finally {
-      setIsUpdating(false)
+      setIsUpdating(false);
     }
-  }
+  };
 
   const handleRemoveLabel = async (labelId: string) => {
     try {
-      setIsUpdating(true)
+      setIsUpdating(true);
       const response = await fetch(`/api/cards/${card.id}/labels`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -154,161 +165,161 @@ export function CardDetailModal() {
       updateCard(card.id, { labels: labelIds })
       toast.success("Label removed")
     } catch (error) {
-      toast.error("Failed to remove label")
-      console.error(error)
+      toast.error("Failed to remove label");
+      console.error(error);
     } finally {
-      setIsUpdating(false)
+      setIsUpdating(false);
     }
-  }
+  };
 
   const handleAddAssignee = async (userId: string) => {
     try {
       // Get the user object to add
-      const userToAdd = currentProject?.members?.find((m) => m.id === userId)
+      const userToAdd = currentProject?.members?.find((m) => m.id === userId);
       if (!userToAdd) {
-        toast.error("User not found")
-        return
+        toast.error("User not found");
+        return;
       }
 
       // Optimistic update
-      const currentAssignedTo = card.assignedTo || []
-      const isAlreadyAssigned = currentAssignedTo.some((u) => u.id === userId)
+      const currentAssignedTo = card.assignedTo || [];
+      const isAlreadyAssigned = currentAssignedTo.some((u) => u.id === userId);
       if (!isAlreadyAssigned) {
-        updateCard(card.id, { assignedTo: [...currentAssignedTo, userToAdd] })
+        updateCard(card.id, { assignedTo: [...currentAssignedTo, userToAdd] });
       }
 
-      setIsUpdating(true)
+      setIsUpdating(true);
       const response = await fetch(`/api/cards/${card.id}/assign`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, assign: true }),
-      })
+      });
       if (!response.ok) {
         // Rollback on error
-        updateCard(card.id, { assignedTo: currentAssignedTo })
-        throw new Error("Failed to assign member")
+        updateCard(card.id, { assignedTo: currentAssignedTo });
+        throw new Error("Failed to assign member");
       }
-      const updatedCard = await response.json()
-      updateCard(card.id, { assignedTo: updatedCard.assignedTo || [] })
-      toast.success("Member assigned")
+      const updatedCard = await response.json();
+      updateCard(card.id, { assignedTo: updatedCard.assignedTo || [] });
+      toast.success("Member assigned");
     } catch (error) {
-      toast.error("Failed to assign member")
-      console.error(error)
+      toast.error("Failed to assign member");
+      console.error(error);
     } finally {
-      setIsUpdating(false)
+      setIsUpdating(false);
     }
-  }
+  };
 
   const handleRemoveAssignee = async (userId: string) => {
     try {
       // Optimistic update
-      const currentAssignedTo = card.assignedTo || []
-      const previousAssignedTo = currentAssignedTo
-      updateCard(card.id, { assignedTo: currentAssignedTo.filter((u) => u.id !== userId) })
+      const currentAssignedTo = card.assignedTo || [];
+      const previousAssignedTo = currentAssignedTo;
+      updateCard(card.id, { assignedTo: currentAssignedTo.filter((u) => u.id !== userId) });
 
-      setIsUpdating(true)
+      setIsUpdating(true);
       const response = await fetch(`/api/cards/${card.id}/assign`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, assign: false }),
-      })
+      });
       if (!response.ok) {
         // Rollback on error
-        updateCard(card.id, { assignedTo: previousAssignedTo })
-        throw new Error("Failed to remove member")
+        updateCard(card.id, { assignedTo: previousAssignedTo });
+        throw new Error("Failed to remove member");
       }
-      const updatedCard = await response.json()
-      updateCard(card.id, { assignedTo: updatedCard.assignedTo || [] })
-      toast.success("Member removed")
+      const updatedCard = await response.json();
+      updateCard(card.id, { assignedTo: updatedCard.assignedTo || [] });
+      toast.success("Member removed");
     } catch (error) {
-      toast.error("Failed to remove member")
-      console.error(error)
+      toast.error("Failed to remove member");
+      console.error(error);
     } finally {
-      setIsUpdating(false)
+      setIsUpdating(false);
     }
-  }
+  };
 
   const handleAssignToMe = async () => {
     if (!currentUser.id || card.assignedTo.some((u) => u.id === currentUser.id)) {
-      return
+      return;
     }
     try {
-      setIsUpdating(true)
+      setIsUpdating(true);
       const response = await fetch(`/api/cards/${card.id}/assign`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: currentUser.id, assign: true }),
-      })
-      if (!response.ok) throw new Error("Failed to assign card")
-      const updatedCard = await response.json()
-      updateCard(card.id, { assignedTo: updatedCard.assignedTo || [] })
-      toast.success("Assigned to you")
+      });
+      if (!response.ok) throw new Error("Failed to assign card");
+      const updatedCard = await response.json();
+      updateCard(card.id, { assignedTo: updatedCard.assignedTo || [] });
+      toast.success("Assigned to you");
     } catch (error) {
-      toast.error("Failed to assign card")
-      console.error(error)
+      toast.error("Failed to assign card");
+      console.error(error);
     } finally {
-      setIsUpdating(false)
+      setIsUpdating(false);
     }
-  }
+  };
 
   const handleUpdatePriority = async (priority: Priority) => {
     try {
-      setIsUpdating(true)
+      setIsUpdating(true);
       // Optimistic update for instant feedback
-      const previousPriority = card.priority
-      updateCard(card.id, { priority })
-      
+      const previousPriority = card.priority;
+      updateCard(card.id, { priority });
+
       // Then sync with server
-      await updateCardAsync(card.id, { priority })
-      toast.success("Priority updated")
+      await updateCardAsync(card.id, { priority });
+      toast.success("Priority updated");
     } catch (error) {
       // Rollback on error
-      updateCard(card.id, { priority: previousPriority })
-      toast.error("Failed to update priority")
-      console.error(error)
+      updateCard(card.id, { priority: previousPriority });
+      toast.error("Failed to update priority");
+      console.error(error);
     } finally {
-      setIsUpdating(false)
+      setIsUpdating(false);
     }
-  }
+  };
 
   const handleUpdateDueDate = async (date: string) => {
     try {
-      setIsUpdating(true)
-      await updateCardAsync(card.id, { dueDate: new Date(date) })
-      toast.success("Due date updated")
+      setIsUpdating(true);
+      await updateCardAsync(card.id, { dueDate: new Date(date) });
+      toast.success("Due date updated");
     } catch (error) {
-      toast.error("Failed to update due date")
-      console.error(error)
+      toast.error("Failed to update due date");
+      console.error(error);
     } finally {
-      setIsUpdating(false)
+      setIsUpdating(false);
     }
-  }
+  };
 
   const handleDeleteCard = () => {
     if (confirm("Are you sure you want to delete this card?")) {
-      deleteCard(card.id)
-      handleClose()
+      deleteCard(card.id);
+      handleClose();
     }
-  }
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
-    if (files.length === 0) return
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-    setIsUploadingAttachment(true)
+    setIsUploadingAttachment(true);
     try {
       for (const file of files) {
-        const formData = new FormData()
-        formData.append("file", file)
+        const formData = new FormData();
+        formData.append("file", file);
 
         const response = await fetch(`/api/cards/${card.id}/attachments`, {
           method: "POST",
           body: formData,
-        })
+        });
 
         if (!response.ok) {
-          const error = await response.json()
-          throw new Error(error.error || "Failed to upload attachment")
+          const error = await response.json();
+          throw new Error(error.error || "Failed to upload attachment");
         }
 
         const result = await response.json()
@@ -317,50 +328,52 @@ export function CardDetailModal() {
         toast.success(`${file.name} uploaded successfully`)
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to upload attachment")
-      console.error(error)
+      toast.error(
+        error instanceof Error ? error.message : "Failed to upload attachment"
+      );
+      console.error(error);
     } finally {
       setIsUploadingAttachment(false)
       if (e.target) {
-        e.target.value = ""
+        e.target.value = "";
       }
     }
-  }
+  };
 
   const handleDeleteAttachment = async (attachmentId: string) => {
-    if (!confirm("Are you sure you want to delete this attachment?")) return
+    if (!confirm("Are you sure you want to delete this attachment?")) return;
 
-    setIsUploadingAttachment(true)
+    setIsUploadingAttachment(true);
     try {
       const response = await fetch(`/api/cards/${card.id}/attachments`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ attachmentId }),
-      })
+      });
 
-      if (!response.ok) throw new Error("Failed to delete attachment")
+      if (!response.ok) throw new Error("Failed to delete attachment");
 
       const newAttachments = (card.attachments || []).filter((a) => a.id !== attachmentId)
       updateCard(card.id, { attachments: newAttachments })
       toast.success("Attachment deleted")
     } catch (error) {
-      toast.error("Failed to delete attachment")
-      console.error(error)
+      toast.error("Failed to delete attachment");
+      console.error(error);
     } finally {
-      setIsUploadingAttachment(false)
+      setIsUploadingAttachment(false);
     }
-  }
+  };
 
   const removeFile = (index: number) => {
-    setUploadedFiles((prev) => prev.filter((_, i) => i !== index))
-  }
+    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const priorityColors = {
     urgent: "bg-red-500",
     high: "bg-orange-500",
     medium: "bg-yellow-500",
     low: "bg-blue-500",
-  }
+  };
 
   return (
     <Dialog open={!!selectedCardId} onOpenChange={handleClose}>
@@ -375,8 +388,8 @@ export function CardDetailModal() {
                   value={editedTitle}
                   onChange={(e) => setEditedTitle(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") handleUpdateTitle()
-                    if (e.key === "Escape") setIsEditingTitle(false)
+                    if (e.key === "Enter") handleUpdateTitle();
+                    if (e.key === "Escape") setIsEditingTitle(false);
                   }}
                   onBlur={handleUpdateTitle}
                   className="text-xl sm:text-2xl font-bold bg-zinc-800 border-zinc-700 text-white"
@@ -384,8 +397,8 @@ export function CardDetailModal() {
               ) : (
                 <h2
                   onClick={() => {
-                    setEditedTitle(card.title)
-                    setIsEditingTitle(true)
+                    setEditedTitle(card.title);
+                    setIsEditingTitle(true);
                   }}
                   className="cursor-pointer text-xl sm:text-2xl font-bold hover:text-violet-400 transition truncate"
                 >
@@ -532,7 +545,9 @@ export function CardDetailModal() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => handleDeleteAttachment(attachment.id)}
+                            onClick={() =>
+                              handleDeleteAttachment(attachment.id)
+                            }
                             disabled={isUploadingAttachment}
                             className="h-8 w-8 p-0 text-zinc-400 hover:text-red-400"
                             title="Delete"
@@ -877,6 +892,6 @@ export function CardDetailModal() {
         </DialogContent>
       </Dialog>
     </Dialog>
-  )
+  );
 }
 export default CardDetailModal

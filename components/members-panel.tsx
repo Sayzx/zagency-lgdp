@@ -49,7 +49,8 @@ export function MembersPanel() {
 
   const currentProject = projects.find((p) => p.id === currentProjectId) as Project | undefined
 
-  const canManageMembers = currentUser.role === "OWNER" || currentUser.role === "ADMIN" || currentUser.role === "owner" || currentUser.role === "admin"
+  const currentRole = (currentUser?.role ?? "").toString().toUpperCase()
+  const canManageMembers = currentRole === "OWNER" || currentRole === "ADMIN"
 
   const roleIcons: Record<UserRole, any> = {
     OWNER: Crown,

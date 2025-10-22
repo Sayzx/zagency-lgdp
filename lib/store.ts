@@ -700,10 +700,10 @@ export const useStore = create<Store>()(
                                 ? {
                                     ...c,
                                     assignedTo: Array.isArray(c.assignedTo)
-                                      ? c.assignedTo.includes(memberId)
+                                      ? c.assignedTo.some((u) => u.id === memberId)
                                         ? c.assignedTo
-                                        : [...c.assignedTo, memberId]
-                                      : [memberId],
+                                        : [...c.assignedTo, { id: memberId } as User]
+                                      : [{ id: memberId } as User],
                                   }
                                 : c,
                             ),
@@ -803,7 +803,7 @@ export const useStore = create<Store>()(
                                 ? {
                                     ...c,
                                     assignedTo: Array.isArray(c.assignedTo)
-                                      ? c.assignedTo.filter((id) => id !== memberId)
+                                      ? c.assignedTo.filter((u) => u.id !== memberId)
                                       : [],
                                   }
                                 : c,
