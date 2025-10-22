@@ -21,7 +21,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         members: {
           include: {
             user: {
-              select: { id: true, username: true, firstName: true, lastName: true, avatar: true },
+              select: { id: true, username: true, email: true, firstName: true, lastName: true, avatar: true },
             },
           },
         },
@@ -121,7 +121,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         members: {
           include: {
             user: {
-              select: { id: true, username: true, firstName: true, lastName: true, avatar: true },
+              select: { id: true, username: true, email: true, firstName: true, lastName: true, avatar: true },
             },
           },
         },

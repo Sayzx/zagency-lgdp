@@ -78,6 +78,8 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-3">
+        {/* METTRE UN ESPACE A DROITE  */}
+        <br></br>
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
@@ -264,24 +266,7 @@ export function Header() {
           </div>
         )}
 
-        <Button
-          size="sm"
-          onClick={handleQuickAddCard}
-          disabled={isCreatingCard}
-          className="bg-violet-600 text-white hover:bg-violet-700"
-        >
-          {isCreatingCard ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creating...
-            </>
-          ) : (
-            <>
-              <Plus className="mr-2 h-4 w-4" />
-              New Card
-            </>
-          )}
-        </Button>
+      
       </div>
     </header>
   )
