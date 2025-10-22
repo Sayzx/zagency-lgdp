@@ -125,16 +125,20 @@ export function KanbanCard({ card, isDragging = false }: KanbanCardProps) {
         {/* Assigned Users */}
         {assignedUsers.length > 0 && (
           <div className="flex -space-x-2">
-            {assignedUsers.slice(0, 3).map((user) => (
+            {assignedUsers.slice(0, 3).map((user) => {
+              const displayName = user.name || `${user.firstName || ""} ${user.lastName || ""}`.trim() || "?"
+              const initials = displayName
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
+                .substring(0, 2)
+              return (
               <Avatar key={user.id} className="h-6 w-6 border-2 border-zinc-800 bg-violet-600">
                 <AvatarFallback className="bg-violet-600 text-white text-xs">
-                  {(user.name ?? "")
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")}
+                  {initials}
                 </AvatarFallback>
               </Avatar>
-            ))}
+            )})}
             {assignedUsers.length > 3 && (
               <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-zinc-800 bg-zinc-700 text-xs text-zinc-300">
                 +{assignedUsers.length - 3}

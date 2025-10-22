@@ -477,13 +477,14 @@ export const useStore = create<Store>()(
             return list
           })
 
+          const movedTitle = (movedCard as any)?.title ?? (movedCard as any)?.id ?? ""
           get().addActivity({
             type: "CARD_MOVED",
             userId: get().currentUser.id,
             cardId,
             listId: targetListId,
             boardId: get().currentBoardId!,
-            description: `moved card "${movedCard.title}"`,
+            description: `moved card "${movedTitle}"`,
           })
 
           return {
@@ -716,7 +717,6 @@ export const useStore = create<Store>()(
                   boardId: activity.boardId,
                   description: activity.description,
                   createdAt: activity.createdAt,
-                  user: activity.user,
                 })
               }
             })
