@@ -43,19 +43,21 @@ export async function POST(
               user: {
                 select: {
                   id: true,
-                  name: true,
-                  email: true,
+                  username: true,
+                  firstName: true,
+                  lastName: true,
                   avatar: true,
                 },
               },
             },
           },
           labels: true,
-          assignedUsers: {
+          assignedTo: {
             select: {
               id: true,
-              name: true,
-              email: true,
+              username: true,
+              firstName: true,
+              lastName: true,
               avatar: true,
             },
           },
@@ -80,19 +82,21 @@ export async function POST(
               user: {
                 select: {
                   id: true,
-                  name: true,
-                  email: true,
+                  username: true,
+                  firstName: true,
+                  lastName: true,
                   avatar: true,
                 },
               },
             },
           },
           labels: true,
-          assignedUsers: {
+          assignedTo: {
             select: {
               id: true,
-              name: true,
-              email: true,
+              username: true,
+              firstName: true,
+              lastName: true,
               avatar: true,
             },
           },

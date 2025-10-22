@@ -22,6 +22,42 @@ export async function POST(
       return NextResponse.json({ error: "User ID is required" }, { status: 400 })
     }
 
+    // Verify user exists
+    const userExists = await prisma.user.findUnique({
+      where: { id: userId },
+    })
+
+    if (!userExists) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 })
+    }
+
+    // Get the card to find the project
+    const cardData = await prisma.card.findUnique({
+      where: { id: params.id },
+      include: { list: { include: { board: true } } },
+    })
+
+    if (!cardData) {
+      return NextResponse.json({ error: "Card not found" }, { status: 404 })
+    }
+
+    // Verify user is a member of the project
+    const isMember = await prisma.projectMember.findUnique({
+      where: {
+        userId_projectId: {
+          userId,
+          projectId: cardData.list.board.projectId,
+        },
+      },
+    })
+
+    if (!isMember) {
+      return NextResponse.json(
+        { error: "User is not a member of this project" },
+        { status: 403 }
+      )
+    }
+
     let card
 
     if (assign) {
