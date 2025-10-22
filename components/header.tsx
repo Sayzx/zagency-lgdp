@@ -1,17 +1,27 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useStore } from "@/lib/store"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Search, Filter, Plus, X, Loader2 } from "lucide-react"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Badge } from "@/components/ui/badge"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
-import { toast } from "sonner"
-import type { Priority } from "@/lib/types"
+import { useState } from "react";
+import { useStore } from "@/lib/store";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search, Filter, Plus, X, Loader2 } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
+import type { Priority } from "@/lib/types";
 
 export function Header() {
   const {
@@ -29,27 +39,34 @@ export function Header() {
     clearFilters,
     createCard,
     currentUser,
-  } = useStore()
+  } = useStore();
 
-  const [isCreatingCard, setIsCreatingCard] = useState(false)
+  const [isCreatingCard, setIsCreatingCard] = useState(false);
 
-  const currentProject = projects.find((p) => p.id === currentProjectId)
-  const currentBoard = currentProject?.boards.find((b) => b.id === currentBoardId)
+  const currentProject = projects.find((p) => p.id === currentProjectId);
+  const currentBoard = currentProject?.boards.find(
+    (b) => b.id === currentBoardId
+  );
 
-  const activeFiltersCount = [filterPriority, filterAssignee, filterLabel, searchQuery].filter(Boolean).length
+  const activeFiltersCount = [
+    filterPriority,
+    filterAssignee,
+    filterLabel,
+    searchQuery,
+  ].filter(Boolean).length;
 
   const handleQuickAddCard = async () => {
     if (!currentBoard || currentBoard.lists.length === 0) {
-      toast.error("No lists available")
-      return
+      toast.error("No lists available");
+      return;
     }
 
-    const title = prompt("Enter card title:")
-    if (!title?.trim()) return
+    const title = prompt("Enter card title:");
+    if (!title?.trim()) return;
 
-    setIsCreatingCard(true)
+    setIsCreatingCard(true);
     try {
-      const firstList = currentBoard.lists[0]
+      const firstList = currentBoard.lists[0];
       await createCard({
         title: title.trim(),
         listId: firstList.id,
@@ -57,24 +74,32 @@ export function Header() {
         assignedTo: [],
         labels: [],
         createdBy: currentUser.id,
-      })
-      toast.success("Card created")
+      });
+      toast.success("Card created");
     } catch (error) {
-      console.error(error)
-      toast.error("Failed to create card")
+      console.error(error);
+      toast.error("Failed to create card");
     } finally {
-      setIsCreatingCard(false)
+      setIsCreatingCard(false);
     }
-  }
+  };
 
-  const selectedLabel = currentProject?.labels?.find((l) => l.id === filterLabel)
-  const selectedAssignee = currentProject?.members.find((m) => m.id === filterAssignee)
+  const selectedLabel = currentProject?.labels?.find(
+    (l) => l.id === filterLabel
+  );
+  const selectedAssignee = currentProject?.members.find(
+    (m) => m.id === filterAssignee
+  );
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-zinc-800 bg-zinc-950 px-6">
       <div className="flex items-center gap-4">
-        <h1 className="text-xl font-bold text-white">{currentBoard?.title || "Project Management"}</h1>
-        {currentBoard?.description && <p className="text-sm text-zinc-500">{currentBoard.description}</p>}
+        <h1 className="text-xl font-bold text-white">
+          {currentBoard?.title || "Project Management"}
+        </h1>
+        {currentBoard?.description && (
+          <p className="text-sm text-zinc-500">{currentBoard.description}</p>
+        )}
       </div>
 
       <div className="flex items-center gap-3">
@@ -114,7 +139,10 @@ export function Header() {
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent align="end" className="w-80 bg-zinc-900 border-zinc-800 text-white">
+          <PopoverContent
+            align="end"
+            className="w-80 bg-zinc-900 border-zinc-800 text-white"
+          >
             <div className="space-y-4">
               <div>
                 <h3 className="font-semibold mb-3">Filter Cards</h3>
@@ -125,7 +153,11 @@ export function Header() {
                 <Label className="text-sm text-zinc-400">Priority</Label>
                 <Select
                   value={filterPriority || "all"}
-                  onValueChange={(value) => setFilterPriority(value === "all" ? null : (value as Priority))}
+                  onValueChange={(value) =>
+                    setFilterPriority(
+                      value === "all" ? null : (value as Priority)
+                    )
+                  }
                 >
                   <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
                     <SelectValue placeholder="All priorities" />
@@ -167,7 +199,9 @@ export function Header() {
                 <Label className="text-sm text-zinc-400">Assigned To</Label>
                 <Select
                   value={filterAssignee || "all"}
-                  onValueChange={(value) => setFilterAssignee(value === "all" ? null : value)}
+                  onValueChange={(value) =>
+                    setFilterAssignee(value === "all" ? null : value)
+                  }
                 >
                   <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
                     <SelectValue placeholder="All members" />
@@ -177,7 +211,11 @@ export function Header() {
                       All members
                     </SelectItem>
                     {currentProject?.members.map((member) => (
-                      <SelectItem key={member.id} value={member.id} className="text-zinc-200">
+                      <SelectItem
+                        key={member.id}
+                        value={member.id}
+                        className="text-zinc-200"
+                      >
                         {member.name}
                       </SelectItem>
                     ))}
@@ -190,7 +228,9 @@ export function Header() {
                 <Label className="text-sm text-zinc-400">Label</Label>
                 <Select
                   value={filterLabel || "all"}
-                  onValueChange={(value) => setFilterLabel(value === "all" ? null : value)}
+                  onValueChange={(value) =>
+                    setFilterLabel(value === "all" ? null : value)
+                  }
                 >
                   <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
                     <SelectValue placeholder="All labels" />
@@ -200,9 +240,16 @@ export function Header() {
                       All labels
                     </SelectItem>
                     {currentProject?.labels?.map((label) => (
-                      <SelectItem key={label.id} value={label.id} className="text-zinc-200">
+                      <SelectItem
+                        key={label.id}
+                        value={label.id}
+                        className="text-zinc-200"
+                      >
                         <div className="flex items-center gap-2">
-                          <div className="h-3 w-3 rounded" style={{ backgroundColor: label.color }} />
+                          <div
+                            className="h-3 w-3 rounded"
+                            style={{ backgroundColor: label.color }}
+                          />
                           {label.name}
                         </div>
                       </SelectItem>
@@ -284,5 +331,5 @@ export function Header() {
         </Button>
       </div>
     </header>
-  )
+  );
 }
