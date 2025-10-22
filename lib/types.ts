@@ -36,7 +36,7 @@ export type Card = {
   position: number
   priority?: Priority
   dueDate?: Date
-  assignedTo: string[]
+  assignedTo: User[]
   labels: string[]
   comments: Comment[]
   attachments?: Attachment[]

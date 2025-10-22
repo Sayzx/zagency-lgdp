@@ -49,9 +49,9 @@ export function CardDetailModal() {
   if (!card) return null
 
   const cardLabels = currentProject?.labels?.filter((l) => card.labels.includes(l.id)) || []
-  const assignedUsers = currentProject?.members?.filter((m) => (card.assignedTo || []).includes(m.id)) || []
+  const assignedUsers = card.assignedTo || []
   const availableLabels = (currentProject?.labels ?? []).filter((l) => !(card.labels || []).includes(l.id))
-  const availableUsers = (currentProject?.members ?? []).filter((m) => !(card.assignedTo || []).includes(m.id))
+  const availableUsers = (currentProject?.members ?? []).filter((m) => !assignedUsers.some((u) => u.id === m.id))
 
   const handleClose = () => {
     setSelectedCard(null)
@@ -163,22 +163,33 @@ export function CardDetailModal() {
 
   const handleAddAssignee = async (userId: string) => {
     try {
+      // Get the user object to add
+      const userToAdd = currentProject?.members?.find((m) => m.id === userId)
+      if (!userToAdd) {
+        toast.error("User not found")
+        return
+      }
+
+      // Optimistic update
+      const currentAssignedTo = card.assignedTo || []
+      const isAlreadyAssigned = currentAssignedTo.some((u) => u.id === userId)
+      if (!isAlreadyAssigned) {
+        updateCard(card.id, { assignedTo: [...currentAssignedTo, userToAdd] })
+      }
+
       setIsUpdating(true)
       const response = await fetch(`/api/cards/${card.id}/assign`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, assign: true }),
       })
-      if (!response.ok) throw new Error("Failed to assign member")
+      if (!response.ok) {
+        // Rollback on error
+        updateCard(card.id, { assignedTo: currentAssignedTo })
+        throw new Error("Failed to assign member")
+      }
       const updatedCard = await response.json()
-
-      const userIds =
-        updatedCard.assignedTo?.map((u: any) => {
-          if (typeof u === "string") return u
-          return u.id
-        }) || []
-
-      updateCard(card.id, { assignedTo: userIds })
+      updateCard(card.id, { assignedTo: updatedCard.assignedTo || [] })
       toast.success("Member assigned")
     } catch (error) {
       toast.error("Failed to assign member")
@@ -190,22 +201,24 @@ export function CardDetailModal() {
 
   const handleRemoveAssignee = async (userId: string) => {
     try {
+      // Optimistic update
+      const currentAssignedTo = card.assignedTo || []
+      const previousAssignedTo = currentAssignedTo
+      updateCard(card.id, { assignedTo: currentAssignedTo.filter((u) => u.id !== userId) })
+
       setIsUpdating(true)
       const response = await fetch(`/api/cards/${card.id}/assign`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, assign: false }),
       })
-      if (!response.ok) throw new Error("Failed to remove member")
+      if (!response.ok) {
+        // Rollback on error
+        updateCard(card.id, { assignedTo: previousAssignedTo })
+        throw new Error("Failed to remove member")
+      }
       const updatedCard = await response.json()
-
-      const userIds =
-        updatedCard.assignedTo?.map((u: any) => {
-          if (typeof u === "string") return u
-          return u.id
-        }) || []
-
-      updateCard(card.id, { assignedTo: userIds })
+      updateCard(card.id, { assignedTo: updatedCard.assignedTo || [] })
       toast.success("Member removed")
     } catch (error) {
       toast.error("Failed to remove member")
@@ -216,7 +229,7 @@ export function CardDetailModal() {
   }
 
   const handleAssignToMe = async () => {
-    if (!currentUser.id || card.assignedTo.includes(currentUser.id)) {
+    if (!currentUser.id || card.assignedTo.some((u) => u.id === currentUser.id)) {
       return
     }
     try {
@@ -228,14 +241,7 @@ export function CardDetailModal() {
       })
       if (!response.ok) throw new Error("Failed to assign card")
       const updatedCard = await response.json()
-
-      const userIds =
-        updatedCard.assignedTo?.map((u: any) => {
-          if (typeof u === "string") return u
-          return u.id
-        }) || []
-
-      updateCard(card.id, { assignedTo: userIds })
+      updateCard(card.id, { assignedTo: updatedCard.assignedTo || [] })
       toast.success("Assigned to you")
     } catch (error) {
       toast.error("Failed to assign card")
@@ -248,9 +254,16 @@ export function CardDetailModal() {
   const handleUpdatePriority = async (priority: Priority) => {
     try {
       setIsUpdating(true)
+      // Optimistic update for instant feedback
+      const previousPriority = card.priority
+      updateCard(card.id, { priority })
+      
+      // Then sync with server
       await updateCardAsync(card.id, { priority })
       toast.success("Priority updated")
     } catch (error) {
+      // Rollback on error
+      updateCard(card.id, { priority: previousPriority })
       toast.error("Failed to update priority")
       console.error(error)
     } finally {
@@ -700,7 +713,7 @@ export function CardDetailModal() {
                       <User className="h-4 w-4 text-violet-400" />
                       Assigned To
                     </h3>
-                    {!card.assignedTo.includes(currentUser.id) && (
+                    {!assignedUsers.some((u) => u.id === currentUser.id) && (
                       <Button
                         size="sm"
                         variant="ghost"
@@ -785,7 +798,7 @@ export function CardDetailModal() {
                   </h3>
                   <Select
                     value={(card.priority || "").toLowerCase()}
-                    onValueChange={(value) => handleUpdatePriority(value.toUpperCase() as Priority)}
+                    onValueChange={(value) => handleUpdatePriority(value as Priority)}
                   >
                     <SelectTrigger className="w-full bg-zinc-800 border-zinc-700 text-sm h-10">
                       <SelectValue placeholder="Set priority" />

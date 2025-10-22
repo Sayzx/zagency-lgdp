@@ -52,6 +52,10 @@ type Store = {
 
   // Member actions
   addMember: (member: User) => void
+  assignMember: (cardId: string, memberId: string) => void
+  assignMemberAsync: (cardId: string, memberId: string) => Promise<void>
+  unassignMember: (cardId: string, memberId: string) => void
+  unassignMemberAsync: (cardId: string, memberId: string) => Promise<void>
 
   // Activity actions
   addActivity: (activity: Omit<Activity, "id" | "createdAt">) => void
@@ -391,7 +395,7 @@ export const useStore = create<Store>()(
                                       description: updatedCard.description,
                                       priority: updatedCard.priority?.toLowerCase() as Priority,
                                       dueDate: updatedCard.dueDate ? new Date(updatedCard.dueDate) : undefined,
-                                      assignedTo: updatedCard.assignedTo?.map((u: any) => u.id) || [],
+                                      assignedTo: updatedCard.assignedTo || [],
                                       labels: updatedCard.labels?.map((l: any) => l.id) || [],
                                     }
                                   : c,
@@ -679,6 +683,210 @@ export const useStore = create<Store>()(
         }))
       },
 
+      assignMember: (cardId, memberId) => {
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === state.currentProjectId
+              ? {
+                  ...p,
+                  boards: p.boards.map((b) =>
+                    b.id === state.currentBoardId
+                      ? {
+                          ...b,
+                          lists: b.lists.map((l) => ({
+                            ...l,
+                            cards: l.cards.map((c) =>
+                              c.id === cardId
+                                ? {
+                                    ...c,
+                                    assignedTo: Array.isArray(c.assignedTo)
+                                      ? c.assignedTo.includes(memberId)
+                                        ? c.assignedTo
+                                        : [...c.assignedTo, memberId]
+                                      : [memberId],
+                                  }
+                                : c,
+                            ),
+                          })),
+                        }
+                      : b,
+                  ),
+                }
+              : p,
+          ),
+        }))
+      },
+
+      assignMemberAsync: async (cardId, memberId) => {
+        try {
+          // Get the current assignedTo before update
+          const state = get()
+          const project = state.projects.find((p) => p.id === state.currentProjectId)
+          const board = project?.boards.find((b) => b.id === state.currentBoardId)
+          const card = board?.lists.flatMap((l) => l.cards).find((c) => c.id === cardId)
+          const currentAssignedTo = card?.assignedTo || []
+
+          // First update locally for instant UI feedback
+          get().assignMember(cardId, memberId)
+
+          // Then sync with server
+          const response = await fetch(`/api/cards/${cardId}/assign`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ memberId }),
+          })
+
+          if (!response.ok) {
+            // Rollback on error
+            get().unassignMember(cardId, memberId)
+            throw new Error(`Failed to assign member: ${response.status} ${response.statusText}`)
+          }
+
+          const updatedCard = await response.json()
+
+          // Update with server response to ensure consistency
+          set((state) => ({
+            projects: state.projects.map((p) =>
+              p.id === state.currentProjectId
+                ? {
+                    ...p,
+                    boards: p.boards.map((b) =>
+                      b.id === state.currentBoardId
+                        ? {
+                            ...b,
+                            lists: b.lists.map((l) => ({
+                              ...l,
+                              cards: l.cards.map((c) =>
+                                c.id === cardId
+                                  ? {
+                                      ...c,
+                                      assignedTo: updatedCard.assignedTo || [],
+                                    }
+                                  : c,
+                              ),
+                            })),
+                          }
+                        : b,
+                    ),
+                  }
+                : p,
+            ),
+          }))
+
+          get().addActivity({
+            type: "CARD_UPDATED",
+            userId: get().currentUser.id,
+            cardId,
+            boardId: get().currentBoardId!,
+            description: `assigned member to card`,
+          })
+        } catch (error) {
+          console.error("Error assigning member:", error)
+          throw error
+        }
+      },
+
+      unassignMember: (cardId, memberId) => {
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === state.currentProjectId
+              ? {
+                  ...p,
+                  boards: p.boards.map((b) =>
+                    b.id === state.currentBoardId
+                      ? {
+                          ...b,
+                          lists: b.lists.map((l) => ({
+                            ...l,
+                            cards: l.cards.map((c) =>
+                              c.id === cardId
+                                ? {
+                                    ...c,
+                                    assignedTo: Array.isArray(c.assignedTo)
+                                      ? c.assignedTo.filter((id) => id !== memberId)
+                                      : [],
+                                  }
+                                : c,
+                            ),
+                          })),
+                        }
+                      : b,
+                  ),
+                }
+              : p,
+          ),
+        }))
+      },
+
+      unassignMemberAsync: async (cardId, memberId) => {
+        try {
+          // Get the current assignedTo before update
+          const state = get()
+          const project = state.projects.find((p) => p.id === state.currentProjectId)
+          const board = project?.boards.find((b) => b.id === state.currentBoardId)
+          const card = board?.lists.flatMap((l) => l.cards).find((c) => c.id === cardId)
+          const currentAssignedTo = card?.assignedTo || []
+
+          // First update locally for instant UI feedback
+          get().unassignMember(cardId, memberId)
+
+          // Then sync with server
+          const response = await fetch(`/api/cards/${cardId}/unassign`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ memberId }),
+          })
+
+          if (!response.ok) {
+            // Rollback on error
+            get().assignMember(cardId, memberId)
+            throw new Error(`Failed to unassign member: ${response.status} ${response.statusText}`)
+          }
+
+          const updatedCard = await response.json()
+
+          // Update with server response to ensure consistency
+          set((state) => ({
+            projects: state.projects.map((p) =>
+              p.id === state.currentProjectId
+                ? {
+                    ...p,
+                    boards: p.boards.map((b) =>
+                      b.id === state.currentBoardId
+                        ? {
+                            ...b,
+                            lists: b.lists.map((l) => ({
+                              ...l,
+                              cards: l.cards.map((c) =>
+                                c.id === cardId
+                                  ? {
+                                      ...c,
+                                      assignedTo: updatedCard.assignedTo || [],
+                                    }
+                                  : c,
+                              ),
+                            })),
+                          }
+                        : b,
+                    ),
+                  }
+                : p,
+            ),
+          }))
+
+          get().addActivity({
+            type: "CARD_UPDATED",
+            userId: get().currentUser.id,
+            cardId,
+            boardId: get().currentBoardId!,
+            description: `unassigned member from card`,
+          })
+        } catch (error) {
+          console.error("Error unassigning member:", error)
+          throw error
+        }
+      },
+
       addActivity: (activity) => {
         const newActivity: Activity = {
           ...activity,
@@ -699,6 +907,13 @@ export const useStore = create<Store>()(
           if (!response.ok) throw new Error("Failed to refresh project")
 
           const refreshedProject = await response.json()
+
+          // Transform members from ProjectMember structure to simple User array
+          if (refreshedProject.members && Array.isArray(refreshedProject.members)) {
+            refreshedProject.members = refreshedProject.members.map((m: any) => 
+              m.user || m
+            )
+          }
 
           // Extract all activities from all boards
           const allActivities: Activity[] = []

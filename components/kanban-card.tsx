@@ -6,7 +6,7 @@ import { useState } from "react"
 import { useStore } from "@/lib/store"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Calendar, MessageSquare } from "lucide-react"
 import type { Card as CardType } from "@/lib/types"
 import { useSortable } from "@dnd-kit/sortable"
@@ -45,13 +45,30 @@ export function KanbanCard({ card, isDragging = false }: KanbanCardProps) {
 
   const currentProject = projects.find((p) => p.id === currentProjectId)
   const cardLabels = currentProject?.labels?.filter((l) => card.labels.includes(l.id)) || []
-  const assignedUsers = currentProject?.members?.filter((m) => Array.isArray(card.assignedTo) && card.assignedTo.includes(m.id)) || []
+  const assignedUsers = Array.isArray(card.assignedTo) ? card.assignedTo : []
 
   const priorityColors = {
     urgent: "bg-red-500",
     high: "bg-orange-500",
     medium: "bg-yellow-500",
     low: "bg-blue-500",
+  }
+
+  const getUserDisplayName = (user: any) => {
+    if (user.firstName || user.lastName) {
+      return `${user.firstName || ""} ${user.lastName || ""}`.trim()
+    }
+    return user.username || user.email || "?"
+  }
+
+  const getInitials = (user: any) => {
+    const name = getUserDisplayName(user)
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase()
   }
 
   const isOverdue = card.dueDate && new Date(card.dueDate) < new Date()
@@ -100,8 +117,9 @@ export function KanbanCard({ card, isDragging = false }: KanbanCardProps) {
         <div className="flex items-center gap-2">
           {/* Priority */}
           {card.priority && (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               <div className={cn("h-2 w-2 rounded-full", priorityColors[card.priority])} />
+              <span className="text-xs text-zinc-300 font-medium capitalize">{card.priority}</span>
             </div>
           )}
 
@@ -125,22 +143,16 @@ export function KanbanCard({ card, isDragging = false }: KanbanCardProps) {
         {/* Assigned Users */}
         {assignedUsers.length > 0 && (
           <div className="flex -space-x-2">
-            {assignedUsers.slice(0, 3).map((user) => {
-              const displayName = user.name || `${user.firstName || ""} ${user.lastName || ""}`.trim() || "?"
-              const initials = displayName
-                .split(" ")
-                .map((n) => n[0])
-                .join("")
-                .substring(0, 2)
-              return (
-              <Avatar key={user.id} className="h-6 w-6 border-2 border-zinc-800 bg-violet-600">
-                <AvatarFallback className="bg-violet-600 text-white text-xs">
-                  {initials}
+            {assignedUsers.slice(0, 3).map((user) => (
+              <Avatar key={user.id} className="h-6 w-6 border-2 border-zinc-800" title={getUserDisplayName(user)}>
+                {user.avatar && <AvatarImage src={user.avatar} alt={getUserDisplayName(user)} />}
+                <AvatarFallback className="bg-violet-600 text-white text-xs font-medium">
+                  {getInitials(user)}
                 </AvatarFallback>
               </Avatar>
-            )})}
+            ))}
             {assignedUsers.length > 3 && (
-              <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-zinc-800 bg-zinc-700 text-xs text-zinc-300">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-zinc-800 bg-zinc-700 text-xs text-zinc-300 font-medium">
                 +{assignedUsers.length - 3}
               </div>
             )}
