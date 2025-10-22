@@ -4,12 +4,13 @@ export type Priority = "low" | "medium" | "high" | "urgent"
 
 export type User = {
   id: string
-  name: string
-  email: string
+  name?: string
+  username?: string
+  email?: string
   firstName?: string
   lastName?: string
   avatar?: string
-  role: UserRole
+  role?: UserRole
 }
 
 export type Label = {
@@ -22,6 +23,7 @@ export type Comment = {
   id: string
   content: string
   userId: string
+  user?: User
   createdAt: Date
   updatedAt: Date
 }

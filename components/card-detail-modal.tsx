@@ -614,20 +614,29 @@ export function CardDetailModal() {
                 <ScrollArea className="max-h-[400px] scrollbar-custom">
                   <div className="space-y-4 pr-4">
                     {(card.comments || []).map((comment) => {
-                      const commentUser = currentProject?.members.find((m) => m.id === comment.userId)
+                      const commentUser = comment.user
+                      const displayName =
+                        `${commentUser?.firstName || ""} ${commentUser?.lastName || ""}`.trim() ||
+                        commentUser?.username ||
+                        commentUser?.email ||
+                        "Unknown"
+                      const initials = displayName
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .substring(0, 2)
+                        .toUpperCase()
                       return (
                         <div key={comment.id} className="flex gap-3">
                           <Avatar className="h-9 w-9 bg-violet-600 flex-shrink-0">
-                            <AvatarFallback className="bg-violet-600 text-white text-xs">
-                              {commentUser?.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("") || "?"}
+                            {commentUser?.avatar && <AvatarImage src={commentUser.avatar} alt={displayName} />}
+                            <AvatarFallback className="bg-violet-600 text-white text-xs font-semibold">
+                              {initials}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-center gap-2 mb-2">
-                              <span className="font-medium text-white text-sm">{commentUser?.name}</span>
+                              <span className="font-medium text-white text-sm">{displayName}</span>
                               <span className="text-xs text-zinc-500">
                                 {format(new Date(comment.createdAt), "MMM d 'at' h:mm a")}
                               </span>
