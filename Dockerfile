@@ -1,56 +1,40 @@
-# Build stage
+# Étape 1 : Build de l'application
 FROM node:20-alpine AS builder
 
+# Crée un dossier de travail
 WORKDIR /app
 
-# Install dependencies
+# Copie des fichiers de dépendances
 COPY package*.json ./
-COPY pnpm-lock.yaml ./
-RUN npm install -g pnpm && pnpm install --frozen-lockfile
 
-# Copy prisma schema
-COPY prisma ./prisma
+# Installation des dépendances
+RUN npm ci
 
-# Generate Prisma client
-RUN pnpm prisma generate
-
-# Copy application code
+# Copie du reste du code source
 COPY . .
 
-# Build Next.js application
-RUN pnpm build
+# Build en mode production
+RUN npm run build
 
-# Production stage
+# Étape 2 : Image finale pour exécution
 FROM node:20-alpine AS runner
 
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV PORT=8888
 
-# Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
-
-# Copy node_modules and prisma from builder
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/.next ./.next
+# Copie les fichiers nécessaires depuis le builder
 COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nextjs -u 1001
+# Copie ton .env si tu veux l’intégrer dans l’image (optionnel)
+# COPY .env .env
 
-USER nextjs
+# Expose le port externe
+EXPOSE 8888
 
-EXPOSE 3000
-
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
-
-ENTRYPOINT ["/sbin/dumb-init", "--"]
-CMD ["node_modules/.bin/next", "start"]
+# Commande de démarrage
+CMD ["npm", "start"]
