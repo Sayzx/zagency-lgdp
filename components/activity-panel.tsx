@@ -40,7 +40,7 @@ export function ActivityPanel() {
               <p className="text-sm text-zinc-600 mt-1">Activity will appear here as you work on your project</p>
             </Card>
           ) : (
-            activities.map((activity) => {
+            [...activities].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((activity) => {
               // Try to get user from activity.user first (from API), then fallback to member lookup
               let userName = "Unknown"
               

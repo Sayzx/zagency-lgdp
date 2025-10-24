@@ -221,7 +221,7 @@ export function Sidebar() {
             <Users className="mr-2 h-4 w-4" />
             Members
           </Button>
-          <Button
+          {/* <Button
             variant="ghost"
             onClick={() => handleViewChange("settings")}
             className={cn(
@@ -231,7 +231,7 @@ export function Sidebar() {
           >
             <Settings className="mr-2 h-4 w-4" />
             Settings
-          </Button>
+          </Button> */}
         </div>
 
         {/* Boards */}

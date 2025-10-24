@@ -89,6 +89,7 @@ export default function LoginPage() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
+            <br></br>
             <Button type="submit" className="w-full bg-violet-600 hover:bg-violet-700" disabled={isLoading}>
               {isLoading ? (
                 <>

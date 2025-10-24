@@ -264,7 +264,7 @@ export function MembersPanel() {
       {/* Members List */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {members.map((member) => {
-          const Icon = roleIcons[member.role]
+          const Icon = roleIcons[member.role] || User
           const isCurrentUser = member.user?.id === currentUser?.id
           const canModify = canManageMembers && !isCurrentUser && member.role !== "OWNER"
           const memberName = member.user ? `${member.user.firstName || ""} ${member.user.lastName || ""}`.trim() || "Unknown" : "Unknown"
